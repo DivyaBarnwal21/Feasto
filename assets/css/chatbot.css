@@ -160,6 +160,42 @@
     background: var(--primary-hover);
 }
 
+/* Quick Replies */
+.quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.quick-reply-btn {
+    background: white;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-reply-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Category Message Styling */
+.message.support-header {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    align-self: center;
+    text-align: center;
+    font-weight: 600;
+    width: 90%;
+    margin: 10px 0;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 480px) {
     .chatbot-window {

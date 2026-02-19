@@ -43,14 +43,42 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => {
         windowEl.classList.add('active');
         toggle.style.display = 'none';
+        
+        // Show support options if first time
+        if (messages.children.length === 1) {
+            setTimeout(showSupportOptions, 1000);
+        }
     });
 
     closeBtn.addEventListener('click', () => {
         windowEl.classList.remove('active');
         setTimeout(() => {
             toggle.style.display = 'flex';
-        }, 300);
+        }, 3000);
     });
+
+    function showSupportOptions() {
+        addMessage("How can I help you today? Select a category or type your query:", "bot");
+        const options = ["Payment Issue", "Wrong Order", "Wrong Item", "Refund Request", "Late Delivery"];
+        const quickReplyDiv = document.createElement('div');
+        quickReplyDiv.className = 'quick-replies';
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'quick-reply-btn';
+            btn.textContent = opt;
+            btn.onclick = () => {
+                addMessage(opt, 'user');
+                setTimeout(() => {
+                    const resp = getBotResponse(opt);
+                    addMessage(resp, 'bot');
+                }, 500);
+            };
+            quickReplyDiv.appendChild(btn);
+        });
+        messages.appendChild(quickReplyDiv);
+        messages.scrollTop = messages.scrollHeight;
+    }
 
     // Send Message
     function sendMessage() {
@@ -78,20 +106,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function getBotResponse(query) {
         query = query.toLowerCase();
         
+        // Customer Support Queries
+        if (query.includes('payment') || query.includes('money') || query.includes('pay')) {
+            return "For payment issues, please ensure your card details are correct. If you were charged twice, please send your transaction ID to accounts@feasto.com.";
+        } else if (query.includes('wrong order') || query.includes('wrong item') || query.includes('missing')) {
+            return "We're sorry to hear that! Please provide your Order ID and a photo of the received items to support@feasto.com, and we will resolve it immediately.";
+        } else if (query.includes('refund')) {
+            return "Refunds usually take 5-7 business days to process. If you haven't received it yet, please contact your bank or reach out to us at support@feasto.com.";
+        } else if (query.includes('late') || query.includes('delay')) {
+            return "We apologize for the delay. Traffic or high demand can sometimes slow us down. You can check your delivery status in your profile or call our delivery partner.";
+        }
+        
+        // General Queries
         if (query.includes('hello') || query.includes('hi')) {
-            return "Hi there! Looking for something delicious today?";
+            return "Hi there! I am Feasto Assistant. How can I help you with your order or payment today?";
         } else if (query.includes('menu') || query.includes('food') || query.includes('eat')) {
-            return "You can check out our full menu by clicking the 'Menu' link in the navigation bar. We have amazing pizzas, burgers, and more!";
+            return "You can check out our full menu by clicking the 'Menu' link in the navigation bar.";
         } else if (query.includes('order') || query.includes('track')) {
-            return "To place an order, just add items to your cart and proceed to checkout. For tracking, please contact our support.";
+            return "To place an order, just add items to your cart. For tracking, please check your email for the live tracking link.";
         } else if (query.includes('contact') || query.includes('support') || query.includes('phone')) {
-            return "You can reach us at support@feasto.com or call us at +1 234 567 890.";
-        } else if (query.includes('price') || query.includes('cost')) {
-            return "Our prices are very competitive! Most items are between $5 and $20. Check the menu for details.";
-        } else if (query.includes('location') || query.includes('address')) {
-            return "We are located at 123 Foodie Street, Flavor Town. Come visit us!";
+            return "You can reach our human support team at support@feasto.com or call us at +1 234 567 890.";
         } else {
-            return "I'm not sure I understand. Can you try asking about our menu, orders, or contact info?";
+            return "I'm specialized in helping with orders and payments. For other queries, please contact support@feasto.com.";
         }
     }
 
