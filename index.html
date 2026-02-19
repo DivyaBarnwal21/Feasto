@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feasto | Delicious Food Delivered</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <header>
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <ion-icon name="restaurant"></ion-icon> Feasto<span>.</span>
+            </a>
+            <nav>
+                <ul class="nav-links" id="navbox">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="cart.html" class="cart-icon">
+                    <ion-icon name="cart-outline"></ion-icon>
+                    <span class="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Placeholder -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <h1>Delicious Food <br> Delivered To Your <br> <span>Doorstep</span></h1>
+                    <p>Experience the taste of premium handcrafted meals delivered fresh and hot. Order now and satisfy
+                        your cravings.</p>
+                    <div class="hero-btns">
+                        <a href="menu.html" class="btn">Order Now</a>
+                        <a href="#featured" class="btn btn-outline">View Menu</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop"
+                        alt="Delicious Food Bowl">
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="container">
+                <div class="search-box">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" id="searchInput" placeholder="Search for food or restaurants...">
+                    <button class="btn">Search</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Section -->
+        <section id="featured" class="featured section-padding">
+            <div class="container">
+                <h2 class="section-title">Featured Items</h2>
+                <div class="food-grid" id="featured-grid">
+                    <!-- Featured items will be injected via JS -->
+                    <div class="loading">Loading featured items...</div>
+                </div>
+                <div style="text-align: center; margin-top: 40px;">
+                    <a href="menu.html" class="btn btn-outline">See Full Menu</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Placeholder -->
+
+
+    <!-- JS -->
+    <script type="module" src="assets/js/script.js"></script>
+</body>
+
+</html>
