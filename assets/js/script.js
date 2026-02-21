@@ -137,10 +137,43 @@ window.removeFromCart = function(id) {
     updateCartCount();
 }
 
-window.checkout = function() {
-    alert('Thank you for your order! This is a demo.');
-    localStorage.removeItem('feasto_cart');
-    window.location.href = 'index.html';
+window.checkout = async function() {
+    const cart = JSON.parse(localStorage.getItem('feasto_cart')) || [];
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+
+    const subtotal = cart.reduce((total, item) => total + item.price * item.qty, 0);
+    const orderData = {
+        items: cart,
+        subtotal: subtotal,
+        delivery_fee: 50,
+        total: subtotal + 50
+    };
+
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            alert(`Thank you for your order! Order ID: ${data.order_id}`);
+            localStorage.removeItem('feasto_cart');
+            window.location.href = 'index.html';
+        } else {
+            console.error('Checkout failed');
+            alert('Something went wrong. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error during checkout:', error);
+        alert('Could not connect to the server. Please make sure the backend is running.');
+    }
 }
 
 function setupImageErrorHandling() {
