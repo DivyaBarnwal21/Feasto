@@ -30,6 +30,26 @@ def create_order():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/contact', methods=['POST'])
+def create_contact():
+    try:
+        contact_data = request.json
+        if not contact_data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Add timestamp
+        contact_data['created_at'] = datetime.utcnow()
+        
+        # Insert into MongoDB
+        result = mongo.db.contacts.insert_one(contact_data)
+        
+        return jsonify({
+            "message": "Message received successfully!",
+            "contact_id": str(result.inserted_id)
+        }), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     print("Server running on http://127.0.0.1:5000")
     app.run(debug=True, port=5000)
