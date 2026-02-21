@@ -112,7 +112,7 @@ function renderCart() {
     
     // Update summary
     document.getElementById('subtotal').textContent = formatPrice(subtotal);
-    document.getElementById('total-price').textContent = formatPrice(subtotal + 5); // $5 delivery
+    document.getElementById('total-price').textContent = formatPrice(subtotal + 50); // ₹50 delivery
 }
 
 window.updateQty = function(id, change) {
@@ -291,5 +291,5 @@ export function updateCartCount() {
 
 // Helper: Format formatted price
 export function formatPrice(price) {
-    return `$${price.toFixed(2)}`;
+    return `₹${price.toFixed(2)}`;
 }
