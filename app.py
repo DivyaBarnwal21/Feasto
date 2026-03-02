@@ -162,10 +162,11 @@ def get_foods():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/nutrition/add', methods=['POST'])
-def add_nutrition():
+@token_required
+def add_nutrition(current_user):
     try:
         data = request.json
-        user_id = data.get('userId', 'guest')
+        user_id = str(current_user['_id'])
         food_id = data.get('foodId')
         count = data.get('count', 1)
         
@@ -210,10 +211,11 @@ def add_nutrition():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/nutrition/remove', methods=['POST'])
-def remove_nutrition():
+@token_required
+def remove_nutrition(current_user):
     try:
         data = request.json
-        user_id = data.get('userId', 'guest')
+        user_id = str(current_user['_id'])
         food_id = data.get('foodId')
         count = data.get('count', 1)
         
