@@ -275,13 +275,23 @@ def remove_nutrition():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/nutrition/today/<user_id>', methods=['GET'])
-def get_today_nutrition(user_id):
+@app.route('/api/nutrition/today', methods=['GET'])
+@token_required
+def get_today_nutrition(current_user):
     try:
         from datetime import datetime
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         
-        record = mongo.db.daily_nutrition.find_one({"userId": user_id, "date": today})
+        # Get user ID string to query the older records if they existed, or new ones
+        user_id = str(current_user['_id'])
+        
+        # Check both modern (tied to ObjectId) or legacy 'guest_user' formats for robust querying
+        record = mongo.db.daily_nutrition.find_one({
+            "$or": [
+                {"userId": user_id, "date": today},
+                {"userId": "guest_user", "date": today} # For backward compatibility with older data locally
+            ]
+        })
         
         if not record:
             return jsonify({
