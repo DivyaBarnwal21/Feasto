@@ -1,4 +1,6 @@
-import { foodItems } from './data.js';
+import { categories, foodItems as staticFoodItems } from './data.js';
+
+let foodItems = [];
 
 // DOM Elements
 const navBox = document.getElementById('navbox');
@@ -6,10 +8,11 @@ const hamburger = document.getElementById('hamburger');
 const cartCountElement = document.querySelector('.cart-count');
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     updateCartCount();
     initMobileMenu();
     setupImageErrorHandling();
+    await fetchFoods();
     if(window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('feasto/')) {
         renderFeaturedItems();
     }
@@ -18,8 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(window.location.pathname.includes('cart.html')) {
         initCart();
+        if(window.renderNutritionDashboard) window.renderNutritionDashboard();
     }
 });
+
+async function fetchFoods() {
+    try {
+        const res = await fetch('http://127.0.0.1:5000/api/foods');
+        if(res.ok) {
+            foodItems = await res.json();
+            foodItems = foodItems.map(item => ({...item, id: item.id || item._id}));
+        } else {
+            console.warn('Failed to fetch from API, using static data');
+            foodItems = staticFoodItems;
+        }
+    } catch (e) {
+        console.error(e);
+        foodItems = staticFoodItems;
+    }
+}
 
 function initMenu() {
     renderMenu('all');
@@ -60,8 +80,11 @@ function renderMenu(category) {
                 <p>${item.description}</p>
                 <div class="price-row">
                     <span class="price">${formatPrice(item.price)}</span>
-                    <button class="add-btn" onclick="addToCart(${item.id})">
+                    <button class="add-btn" onclick="addToCart('${item.id}')">
                         <ion-icon name="cart"></ion-icon> Add
+                    </button>
+                    <button class="add-btn" style="background:var(--primary-color); padding: 5px;" onclick="showNutritionModal('${item.id}')" title="Nutrition Info">
+                        <ion-icon name="information-circle"></ion-icon>
                     </button>
                 </div>
             </div>
@@ -256,8 +279,11 @@ function renderFeaturedItems() {
                 <p>${item.description}</p>
                 <div class="price-row">
                     <span class="price">${formatPrice(item.price)}</span>
-                    <button class="add-btn" onclick="addToCart(${item.id})">
+                    <button class="add-btn" onclick="addToCart('${item.id}')">
                         <ion-icon name="cart"></ion-icon> Add
+                    </button>
+                    <button class="add-btn" style="background:var(--primary-color); padding: 5px;" onclick="showNutritionModal('${item.id}')" title="Nutrition Info">
+                        <ion-icon name="information-circle"></ion-icon>
                     </button>
                 </div>
             </div>
@@ -266,10 +292,11 @@ function renderFeaturedItems() {
 }
 
 // Global Add to Cart
-window.addToCart = function(id) {
+window.addToCart = async function(id) {
     let cart = JSON.parse(localStorage.getItem('feasto_cart')) || [];
-    const item = foodItems.find(i => i.id === id);
-    const existingItem = cart.find(i => i.id === id);
+    // Convert to strict comparison after type coercion since ID might be string or number
+    const item = foodItems.find(i => String(i.id) === String(id));
+    const existingItem = cart.find(i => String(i.id) === String(id));
     
     if(existingItem) {
         existingItem.qty += 1;
@@ -280,6 +307,18 @@ window.addToCart = function(id) {
     localStorage.setItem('feasto_cart', JSON.stringify(cart));
     updateCartCount();
     showToast('Item added to cart!');
+
+    // Update Daily Nutrition
+    try {
+        const userId = 'guest_user'; // fallback user since no login
+        await fetch('http://127.0.0.1:5000/api/nutrition/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, foodId: id })
+        });
+    } catch(e) {
+        console.error('Failed to log macro intake', e);
+    }
 }
 
 // Toast Notification
@@ -305,11 +344,27 @@ function showToast(message) {
     }, 3000);
 }
 
-// Global fadeOut animation
+// Global fadeOut animation & Modal styles
 const style = document.createElement('style');
 style.innerHTML = `
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
+.nutrition-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s; }
+.nutrition-modal { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; position: relative; box-shadow: 0px 10px 30px rgba(0,0,0,0.2); }
+.nutrition-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #333; }
+.nutrition-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+.nutrition-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid var(--primary-color); }
+.nutrition-card.calories { border-left-color: #ff5722; }
+.nutrition-card.protein { border-left-color: #4CAF50; }
+.nutrition-card.carbs { border-left-color: #2196F3; }
+.nutrition-card.fats { border-left-color: #FFC107; }
+.nutrition-label { display: block; font-size: 14px; color: #666; font-weight: 500;}
+.nutrition-value { display: block; font-size: 18px; font-weight: 700; color: #222; margin-top: 5px; }
+.dashboard-container { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; }
+.dashboard-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+.stat-card { background: var(--primary-color); color: #fff; padding: 15px 25px; border-radius: 8px; text-align: center; }
+.stat-label { display: block; font-size: 14px; opacity: 0.9; }
+.stat-value { display: block; font-size: 24px; font-weight: bold; margin-top: 5px; }
 `;
 document.head.appendChild(style);
 
@@ -325,4 +380,127 @@ export function updateCartCount() {
 // Helper: Format formatted price
 export function formatPrice(price) {
     return `₹${price.toFixed(2)}`;
+}
+
+window.showNutritionModal = function(id) {
+    const item = foodItems.find(i => String(i.id) === String(id));
+    if(!item) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'nutrition-modal-overlay';
+    overlay.innerHTML = `
+        <div class="nutrition-modal">
+            <button class="nutrition-close" onclick="this.closest('.nutrition-modal-overlay').remove()">&times;</button>
+            <h2 style="font-size: 22px; color: var(--dark-color);">${item.name}</h2>
+            <p style="color: #666; margin-top: 5px;">Nutritional Information</p>
+            <div class="nutrition-grid">
+                <div class="nutrition-card calories">
+                    <span class="nutrition-label">Calories</span>
+                    <span class="nutrition-value">${item.calories || 0} kcal</span>
+                </div>
+                <div class="nutrition-card protein">
+                    <span class="nutrition-label">Protein</span>
+                    <span class="nutrition-value">${item.protein || 0}g</span>
+                </div>
+                <div class="nutrition-card carbs">
+                    <span class="nutrition-label">Carbs</span>
+                    <span class="nutrition-value">${item.carbs || 0}g</span>
+                </div>
+                <div class="nutrition-card fats">
+                    <span class="nutrition-label">Fats</span>
+                    <span class="nutrition-value">${item.fats || 0}g</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Close when clicking outside
+    overlay.addEventListener('click', (e) => {
+        if(e.target === overlay) overlay.remove();
+    });
+    
+    document.body.appendChild(overlay);
+}
+
+// Render Nutrition Dashboard in Cart
+window.renderNutritionDashboard = async function() {
+    const container = document.getElementById('cart-container');
+    if(!container) return;
+    
+    const dashboardDiv = document.createElement('div');
+    dashboardDiv.className = 'dashboard-container container';
+    dashboardDiv.innerHTML = `<div style="text-align: center; padding: 40px;">Loading Daily Intake Dashboard...</div>`;
+    // Insert dashboard just below the container
+    container.after(dashboardDiv);
+    
+    try {
+        const userId = 'guest_user';
+        const res = await fetch(`http://127.0.0.1:5000/api/nutrition/today/${userId}`);
+        const data = await res.json();
+        
+        const hasData = data.totalCalories > 0;
+        
+        let content = `
+            <h2 class="section-title" style="margin-bottom: 20px;">Today's Intake Dashboard</h2>
+            <div class="dashboard-stats">
+              <div class="stat-card">
+                 <span class="stat-label">Total Calories Consumed</span>
+                 <span class="stat-value">${data.totalCalories || 0} kcal</span>
+              </div>
+            </div>
+        `;
+        
+        if (hasData) {
+            content += `
+              <div style="width: 100%; max-width: 400px; margin: 0 auto;">
+                  <canvas id="nutritionChart"></canvas>
+              </div>
+            `;
+        } else {
+            content += `<p style="text-align:center; color:#666;">No intake logged for today. Add items to your cart!</p>`;
+        }
+        
+        dashboardDiv.innerHTML = content;
+        
+        if(hasData) {
+            // Check if Chart is available (we need to inject script tag for Chart.js)
+            if(window.Chart) {
+                initChartJs(data);
+            } else {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+                script.onload = () => initChartJs(data);
+                document.head.appendChild(script);
+            }
+        }
+        
+    } catch(e) {
+        console.error('Failed to load nutrition dashboard:', e);
+        dashboardDiv.innerHTML = '<p style="text-align:center; color:red;">Failed to load daily intake.</p>';
+    }
+}
+
+function initChartJs(data) {
+    const ctx = document.getElementById('nutritionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Protein (g)', 'Carbs (g)', 'Fats (g)'],
+            datasets: [{
+                data: [data.totalProtein, data.totalCarbs, data.totalFats],
+                backgroundColor: [
+                    '#4CAF50', // green
+                    '#2196F3', // blue
+                    '#FFC107'  // yellow
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
 }
