@@ -156,40 +156,6 @@ function initAuth() {
                 errorDiv.textContent = err.message;
             }
         });
-    if(registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorDiv.textContent = '';
-            const name = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            
-            try {
-                const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
-                });
-                
-                const data = await res.json();
-                if(!res.ok) throw new Error(data.error || 'Registration failed');
-                
-                // Directly login after signup
-                const loginRes = await fetch('http://127.0.0.1:5000/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const loginData = await loginRes.json();
-                localStorage.setItem('feasto_jwt', loginData.token);
-                localStorage.setItem('feasto_user', JSON.stringify(loginData.user));
-                window.location.href = 'index.html';
-                
-            } catch (err) {
-                errorDiv.textContent = err.message;
-            }
-        });
     }
 }
 
