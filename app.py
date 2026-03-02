@@ -68,6 +68,7 @@ def add_nutrition():
         data = request.json
         user_id = data.get('userId', 'guest')
         food_id = data.get('foodId')
+        count = data.get('count', 1)
         
         if not food_id:
             return jsonify({"error": "Missing foodId"}), 400
@@ -87,10 +88,10 @@ def add_nutrition():
             {"userId": user_id, "date": today},
             {
                 "$inc": {
-                    "totalCalories": food.get("calories", 0),
-                    "totalProtein": food.get("protein", 0),
-                    "totalCarbs": food.get("carbs", 0),
-                    "totalFats": food.get("fats", 0)
+                    "totalCalories": food.get("calories", 0) * count,
+                    "totalProtein": food.get("protein", 0) * count,
+                    "totalCarbs": food.get("carbs", 0) * count,
+                    "totalFats": food.get("fats", 0) * count
                 }
             },
             upsert=True,
@@ -103,6 +104,72 @@ def add_nutrition():
         
         return jsonify({
             "message": "Nutrition updated successfully!",
+            "data": result
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/nutrition/remove', methods=['POST'])
+def remove_nutrition():
+    try:
+        data = request.json
+        user_id = data.get('userId', 'guest')
+        food_id = data.get('foodId')
+        count = data.get('count', 1)
+        
+        if not food_id:
+            return jsonify({"error": "Missing foodId"}), 400
+
+        # Find food to get macros
+        food = mongo.db.foods.find_one({"id": int(food_id)})
+        if not food:
+            return jsonify({"error": "Food not found"}), 404
+            
+        from datetime import datetime
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Upsert the daily_nutrition record with negative values
+        import pymongo
+        result = mongo.db.daily_nutrition.find_one_and_update(
+            {"userId": user_id, "date": today},
+            {
+                "$inc": {
+                    "totalCalories": -(food.get("calories", 0) * count),
+                    "totalProtein": -(food.get("protein", 0) * count),
+                    "totalCarbs": -(food.get("carbs", 0) * count),
+                    "totalFats": -(food.get("fats", 0) * count)
+                }
+            },
+            upsert=True,
+            return_document=pymongo.ReturnDocument.AFTER
+        )
+        
+        # Ensure values don't go below 0
+        if result:
+            needs_update = False
+            for key in ["totalCalories", "totalProtein", "totalCarbs", "totalFats"]:
+                if result.get(key, 0) < 0:
+                    result[key] = 0
+                    needs_update = True
+            
+            if needs_update:
+                result = mongo.db.daily_nutrition.find_one_and_update(
+                    {"userId": user_id, "date": today},
+                    {"$set": {
+                        "totalCalories": result["totalCalories"],
+                        "totalProtein": result["totalProtein"],
+                        "totalCarbs": result["totalCarbs"],
+                        "totalFats": result["totalFats"]
+                    }},
+                    return_document=pymongo.ReturnDocument.AFTER
+                )
+                
+            if '_id' in result:
+                result['_id'] = str(result['_id'])
+            
+        return jsonify({
+            "message": "Nutrition removed successfully!",
             "data": result
         }), 200
         

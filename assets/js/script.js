@@ -138,26 +138,65 @@ function renderCart() {
     document.getElementById('total-price').textContent = formatPrice(subtotal + 50); // ₹50 delivery
 }
 
-window.updateQty = function(id, change) {
+window.updateQty = async function(id, change) {
     let cart = JSON.parse(localStorage.getItem('feasto_cart')) || [];
-    const item = cart.find(i => i.id === id);
+    const item = cart.find(i => String(i.id) === String(id));
     if(item) {
         item.qty += change;
         if(item.qty <= 0) {
-            cart = cart.filter(i => i.id !== id);
+            cart = cart.filter(i => String(i.id) !== String(id));
+        }
+        
+        // Update Daily Nutrition
+        try {
+            const userId = 'guest_user';
+            const endpoint = change > 0 ? '/api/nutrition/add' : '/api/nutrition/remove';
+            await fetch(`http://127.0.0.1:5000${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, foodId: id, count: Math.abs(change) })
+            });
+        } catch(e) {
+            console.error('Failed to update macro intake', e);
         }
     }
     localStorage.setItem('feasto_cart', JSON.stringify(cart));
     renderCart();
     updateCartCount();
+    
+    // Refresh dashboard if we are on the cart page
+    if(window.location.pathname.includes('cart.html') && window.renderNutritionDashboard) {
+        window.renderNutritionDashboard();
+    }
 }
 
-window.removeFromCart = function(id) {
+window.removeFromCart = async function(id) {
     let cart = JSON.parse(localStorage.getItem('feasto_cart')) || [];
-    cart = cart.filter(i => i.id !== id);
+    const itemToRemove = cart.find(i => String(i.id) === String(id));
+    
+    if (itemToRemove) {
+        // Update Daily Nutrition
+        try {
+            const userId = 'guest_user';
+            await fetch(`http://127.0.0.1:5000/api/nutrition/remove`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, foodId: id, count: itemToRemove.qty })
+            });
+        } catch(e) {
+            console.error('Failed to remove macro intake', e);
+        }
+    }
+
+    cart = cart.filter(i => String(i.id) !== String(id));
     localStorage.setItem('feasto_cart', JSON.stringify(cart));
     renderCart();
     updateCartCount();
+    
+    // Refresh dashboard if we are on the cart page
+    if(window.location.pathname.includes('cart.html') && window.renderNutritionDashboard) {
+        window.renderNutritionDashboard();
+    }
 }
 
 window.checkout = async function() {
@@ -427,11 +466,15 @@ window.renderNutritionDashboard = async function() {
     const container = document.getElementById('cart-container');
     if(!container) return;
     
-    const dashboardDiv = document.createElement('div');
-    dashboardDiv.className = 'dashboard-container container';
+    let dashboardDiv = document.querySelector('.dashboard-container.container');
+    if (!dashboardDiv) {
+        dashboardDiv = document.createElement('div');
+        dashboardDiv.className = 'dashboard-container container';
+        // Insert dashboard just below the container
+        container.after(dashboardDiv);
+    }
+    
     dashboardDiv.innerHTML = `<div style="text-align: center; padding: 40px;">Loading Daily Intake Dashboard...</div>`;
-    // Insert dashboard just below the container
-    container.after(dashboardDiv);
     
     try {
         const userId = 'guest_user';
@@ -465,6 +508,9 @@ window.renderNutritionDashboard = async function() {
         if(hasData) {
             // Check if Chart is available (we need to inject script tag for Chart.js)
             if(window.Chart) {
+                if (window.nutritionChartInstance) {
+                    window.nutritionChartInstance.destroy();
+                }
                 initChartJs(data);
             } else {
                 const script = document.createElement('script');
@@ -482,7 +528,7 @@ window.renderNutritionDashboard = async function() {
 
 function initChartJs(data) {
     const ctx = document.getElementById('nutritionChart').getContext('2d');
-    new Chart(ctx, {
+    window.nutritionChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
             labels: ['Protein (g)', 'Carbs (g)', 'Fats (g)'],
