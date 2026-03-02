@@ -2,6 +2,22 @@ import { categories, foodItems as staticFoodItems } from './data.js';
 
 let foodItems = [];
 
+// Auth Tokens
+export function getAuthToken() {
+    return localStorage.getItem('feasto_jwt');
+}
+
+export function getCurrentUser() {
+    const userStr = localStorage.getItem('feasto_user');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
+window.logout = function() {
+    localStorage.removeItem('feasto_jwt');
+    localStorage.removeItem('feasto_user');
+    window.location.reload();
+}
+
 // DOM Elements
 const navBox = document.getElementById('navbox');
 const hamburger = document.getElementById('hamburger');
@@ -12,6 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartCount();
     initMobileMenu();
     setupImageErrorHandling();
+    setupAuthNav();
+    
     await fetchFoods();
     if(window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('feasto/')) {
         renderFeaturedItems();
@@ -23,7 +41,157 @@ document.addEventListener('DOMContentLoaded', async () => {
         initCart();
         if(window.renderNutritionDashboard) window.renderNutritionDashboard();
     }
+    if(window.location.pathname.includes('login.html')) {
+        initAuth();
+    }
 });
+
+function setupAuthNav() {
+    const user = getCurrentUser();
+    const navLinks = document.getElementById('navbox');
+    
+    if (user && navLinks) {
+        // Find login link if exists and change it to Logout / User Profile
+        const links = navLinks.querySelectorAll('a');
+        let loginLink = null;
+        links.forEach(a => {
+           if(a.href.includes('login.html') || a.textContent === 'Login') {
+               loginLink = a;
+           }
+        });
+        
+        if (loginLink) {
+            loginLink.textContent = `Hi, ${user.name.split(' ')[0]}`;
+            loginLink.href = "#";
+            loginLink.onclick = (e) => {
+                e.preventDefault();
+                if(confirm("Are you sure you want to log out?")) {
+                    logout();
+                }
+            };
+        } else {
+            // Append it dynamically
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" onclick="logout(); return false;" style="color:var(--primary-color);">Hi, ${user.name.split(' ')[0]} (Logout)</a>`;
+            navLinks.appendChild(li);
+        }
+    } else if (!user && navLinks) {
+        // Make sure login link exists
+        const links = navLinks.querySelectorAll('a');
+        let hasLogin = false;
+        links.forEach(a => {
+           if(a.href.includes('login.html')) hasLogin = true;
+        });
+        if(!hasLogin) {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="login.html">Login</a>`;
+            navLinks.appendChild(li);
+        }
+    }
+}
+
+function initAuth() {
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const errorDiv = document.getElementById('auth-error');
+
+    if(loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.textContent = '';
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.error || 'Login failed');
+                
+                localStorage.setItem('feasto_jwt', data.token);
+                localStorage.setItem('feasto_user', JSON.stringify(data.user));
+                window.location.href = 'index.html';
+                
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        });
+    }
+
+    if(registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.textContent = '';
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.error || 'Registration failed');
+                
+                // Directly login after signup
+                const loginRes = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const loginData = await loginRes.json();
+                localStorage.setItem('feasto_jwt', loginData.token);
+                localStorage.setItem('feasto_user', JSON.stringify(loginData.user));
+                window.location.href = 'index.html';
+                
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        });
+    if(registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.textContent = '';
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.error || 'Registration failed');
+                
+                // Directly login after signup
+                const loginRes = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const loginData = await loginRes.json();
+                localStorage.setItem('feasto_jwt', loginData.token);
+                localStorage.setItem('feasto_user', JSON.stringify(loginData.user));
+                window.location.href = 'index.html';
+                
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        });
+    }
+}
 
 async function fetchFoods() {
     try {
@@ -147,18 +315,23 @@ window.updateQty = async function(id, change) {
             cart = cart.filter(i => String(i.id) !== String(id));
         }
         
-        // Update Daily Nutrition
-        try {
-            const userId = 'guest_user';
-            const endpoint = change > 0 ? '/api/nutrition/add' : '/api/nutrition/remove';
-            await fetch(`http://127.0.0.1:5000${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, foodId: id, count: Math.abs(change) })
-            });
-        } catch(e) {
-            console.error('Failed to update macro intake', e);
-        }
+    // Update Daily Nutrition securely with Auth
+    try {
+        const user = getCurrentUser();
+        if(!user) return; // Feature only logs for auth users
+        const token = getAuthToken();
+        const endpoint = change > 0 ? '/api/nutrition/add' : '/api/nutrition/remove';
+        await fetch(`http://127.0.0.1:5000${endpoint}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ foodId: id, count: Math.abs(change) })
+        });
+    } catch(e) {
+        console.error('Failed to update macro intake', e);
+    }
     }
     localStorage.setItem('feasto_cart', JSON.stringify(cart));
     renderCart();
@@ -175,13 +348,18 @@ window.removeFromCart = async function(id) {
     const itemToRemove = cart.find(i => String(i.id) === String(id));
     
     if (itemToRemove) {
-        // Update Daily Nutrition
+        // Update Daily Nutrition securely
         try {
-            const userId = 'guest_user';
+            const user = getCurrentUser();
+            if(!user) return;
+            const token = getAuthToken();
             await fetch(`http://127.0.0.1:5000/api/nutrition/remove`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, foodId: id, count: itemToRemove.qty })
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ foodId: id, count: itemToRemove.qty })
             });
         } catch(e) {
             console.error('Failed to remove macro intake', e);
@@ -477,14 +655,30 @@ window.renderNutritionDashboard = async function() {
     dashboardDiv.innerHTML = `<div style="text-align: center; padding: 40px;">Loading Daily Intake Dashboard...</div>`;
     
     try {
-        const userId = 'guest_user';
-        const res = await fetch(`http://127.0.0.1:5000/api/nutrition/today/${userId}`);
+        const user = getCurrentUser();
+        const token = getAuthToken();
+        if(!user || !token) {
+             dashboardDiv.innerHTML = `<p style="text-align:center; color:#666;">Please <a href="login.html" style="color:var(--primary-color);">Login</a> to see your Daily Nutrition.</p>`;
+             return;
+        }
+
+        const res = await fetch(`http://127.0.0.1:5000/api/nutrition/today`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         const data = await res.json();
+        
+        let warningText = '';
+        if (data.totalCalories > 2000) {
+            warningText = `<div style="background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; border: 1px solid #ef5350;">Warning: You have exceeded your recommended daily calorie intake. (2000 kcal)</div>`;
+        }
         
         const hasData = data.totalCalories > 0;
         
         let content = `
             <h2 class="section-title" style="margin-bottom: 20px;">Today's Intake Dashboard</h2>
+            ${warningText}
             <div class="dashboard-stats">
               <div class="stat-card">
                  <span class="stat-label">Total Calories Consumed</span>
