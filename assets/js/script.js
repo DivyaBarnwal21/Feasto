@@ -344,6 +344,13 @@ window.removeFromCart = async function(id) {
 }
 
 window.checkout = async function() {
+    const user = getCurrentUser();
+    if (!user) {
+        alert('Please login to proceed to checkout!');
+        window.location.href = 'login.html';
+        return;
+    }
+
     const cart = JSON.parse(localStorage.getItem('feasto_cart')) || [];
     if (cart.length === 0) {
         alert('Your cart is empty!');
