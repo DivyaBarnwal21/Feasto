@@ -200,25 +200,6 @@ python app.py
 ```bash
 http://127.0.0.1:5000
 ```
-# 📸 Screenshots
-
-### 🏠 Home Page
-
-
-### 🍔 Menu Page
-![Menu Page](screenshots/menu.png)
-
-### 🔐 Login Page
-![Login Page](screenshots/login.png)
-
-### 🛒 Cart Page
-![Cart Page](screenshots/cart.png)
-
-### 📞 Contact Page
-![Contact Page](screenshots/contact.png)
-
-### 🤖 Chatbot Assistant
-![Chatbot](screenshots/chatbot.png)
 
 # 🌟 Future Improvements
 
