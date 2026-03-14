@@ -121,6 +121,7 @@ Information about the Feasto platform and its mission.
 - VS Code
 
 # 📂 Project Structure
+```
 feasto
 │
 ├── assets
@@ -160,6 +161,7 @@ feasto
 ├── verify_mongo.py
 ├── requirements.txt
 └── README.md
+```
 
 # ⚙️ Installation
 1️⃣ Clone the Repository
