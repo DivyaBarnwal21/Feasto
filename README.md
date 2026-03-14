@@ -164,43 +164,61 @@ feasto
 ```
 
 # ⚙️ Installation
-1️⃣ Clone the Repository
+### 1️⃣ Clone the Repository
+```bash
 git clone https://github.com/DivyaBarnwal21/Feasto.git
-2️⃣ Navigate to Project Folder
+```
+### 2️⃣ Navigate to Project Folder
+```bash
 cd Feasto
-3️⃣ Create Virtual Environment
+```
+### 3️⃣ Create Virtual Environment
+```bash
 python -m venv .venv
-4️⃣ Activate Virtual Environment
+```
+### 4️⃣ Activate Virtual Environment
 
-Windows
-
+**Windows**
+```bash
 .venv\Scripts\activate
+```
 
-Mac/Linux
-
+**Mac/Linux**
+```bash
 source .venv/bin/activate
-5️⃣ Install Dependencies
+```
+### 5️⃣ Install Dependencies
+```bash
 pip install -r requirements.txt
-6️⃣ Run the Application
+```
+### 6️⃣ Run the Application
+```bash
 python app.py
+```
 
-Open in browser:
-
+### Open in browser:
+```bash
 http://127.0.0.1:5000
+```
 # 📸 Screenshots
 
-Home Page
+### 🏠 Home Page
+![Home Page](screenshots/home.png)
 
+### 🍔 Menu Page
+![Menu Page](screenshots/menu.png)
 
-Menu Page
+### 🔐 Login Page
+![Login Page](screenshots/login.png)
 
-Login Page
+### 🛒 Cart Page
+![Cart Page](screenshots/cart.png)
 
-Cart Page
+### 📞 Contact Page
+![Contact Page](screenshots/contact.png)
 
-Contact Page
-
-Chatbot Assistant
+### 🤖 Chatbot Assistant
+![Chatbot](screenshots/chatbot.png)
 
 # 🌟 Future Improvements
 
