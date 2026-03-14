@@ -203,7 +203,7 @@ http://127.0.0.1:5000
 # 📸 Screenshots
 
 ### 🏠 Home Page
-![Home Page](screenshots/home.png)
+
 
 ### 🍔 Menu Page
 ![Menu Page](screenshots/menu.png)
